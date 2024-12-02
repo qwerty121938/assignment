@@ -1,26 +1,40 @@
 import tkinter as tk
 import random
 import time
+import os
 from PIL import Image, ImageTk
+
+
+current_directory = os.getcwd()
 root = tk.Tk()
 
 PLAYER_SIZE = 20
 ENEMY_SIZE = 20
 WIDTH = 400
 HEIGHT = 600
+SCREEN_WIDTH = root.winfo_screenwidth()
+SCREEN_HEIGHT = root.winfo_screenheight()
 ENEMY_SPEED = 5
 ENEMY_COUNT = 10
 
+root.title("Game")
+root.geometry(f"{WIDTH}x{HEIGHT}+{int(SCREEN_WIDTH/4)}+{int(SCREEN_HEIGHT/4)}")
+root.iconbitmap(f"{current_directory}/image/game_icon.ico")
+
 canvas = tk.Canvas(root,width=WIDTH,height=HEIGHT,bg="white")
 canvas.pack()
-x = random.uniform(PLAYER_SIZE/2,WIDTH-PLAYER_SIZE/2)
-y = random.uniform(PLAYER_SIZE/2,HEIGHT-PLAYER_SIZE/2)
+x = random.uniform(PLAYER_SIZE/2.0,WIDTH-PLAYER_SIZE/2.0)
+y = random.uniform(PLAYER_SIZE/2.0,HEIGHT-PLAYER_SIZE/2.0)
 
-img = Image.open("D:/python code/image/player.png").resize((PLAYER_SIZE,PLAYER_SIZE))
+back_ground_img = Image.open(f"{current_directory}/image/background.jpg").resize((WIDTH,HEIGHT))
+back_ground_img = ImageTk.PhotoImage(back_ground_img)
+back_ground = canvas.create_image(WIDTH/2,HEIGHT/2,image=back_ground_img)
+
+img = Image.open(f"{current_directory}/image/player.png").resize((PLAYER_SIZE,PLAYER_SIZE))
 player_img = ImageTk.PhotoImage(img)
 player = canvas.create_image(x,y,image=player_img)
 
-img = Image.open("D:/python code/image/enemy.png").resize((ENEMY_SIZE,ENEMY_SIZE))
+img = Image.open(f"{current_directory}/image/enemy.png").resize((ENEMY_SIZE,ENEMY_SIZE))
 enemy_img = ImageTk.PhotoImage(img)
 
 
