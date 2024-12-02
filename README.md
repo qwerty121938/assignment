@@ -1,1 +1,3 @@
-# assignment
+‵‵‵
+pip install pillow
+‵‵‵
