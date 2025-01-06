@@ -1,99 +1,114 @@
 import tkinter as tk
 import random
 import time
-import os
 from PIL import Image, ImageTk
 
 
-current_directory = os.getcwd()
-root = tk.Tk()
+class Gameobject:
+    def __init__(self, canvas, image_path, size, x, y):
+        self.canvas = canvas
+        self.size = size 
+        img = Image.open(image_path).resize((size,size))
+        self.image_tk = ImageTk.PhotoImage(img)
+        self.object = self.canvas.create_image(x,y,image=self.image_tk)
 
-PLAYER_SIZE = 20
-ENEMY_SIZE = 20
-WIDTH = 400
-HEIGHT = 600
-SCREEN_WIDTH = root.winfo_screenwidth()
-SCREEN_HEIGHT = root.winfo_screenheight()
-ENEMY_SPEED = 5
-ENEMY_COUNT = 10
+    def move(self, dx, dy):
+        self.canvas.move(self.object, dx, dy)
 
-root.title("Game")
-root.geometry(f"{WIDTH}x{HEIGHT}+{int(SCREEN_WIDTH/4)}+{int(SCREEN_HEIGHT/4)}")
-root.iconbitmap(f"{current_directory}/image/game_icon.ico")
-
-canvas = tk.Canvas(root,width=WIDTH,height=HEIGHT,bg="white")
-canvas.pack()
-x = random.uniform(PLAYER_SIZE/2.0,WIDTH-PLAYER_SIZE/2.0)
-y = random.uniform(PLAYER_SIZE/2.0,HEIGHT-PLAYER_SIZE/2.0)
-
-back_ground_img = Image.open(f"{current_directory}/image/background.jpg").resize((WIDTH,HEIGHT))
-back_ground_img = ImageTk.PhotoImage(back_ground_img)
-back_ground = canvas.create_image(WIDTH/2,HEIGHT/2,image=back_ground_img)
-
-img = Image.open(f"{current_directory}/image/player.png").resize((PLAYER_SIZE,PLAYER_SIZE))
-player_img = ImageTk.PhotoImage(img)
-player = canvas.create_image(x,y,image=player_img)
-
-img = Image.open(f"{current_directory}/image/enemy.png").resize((ENEMY_SIZE,ENEMY_SIZE))
-enemy_img = ImageTk.PhotoImage(img)
-
-
-enemies=[]
-
-#隨機
-def create_enemy():
-    x = random.uniform(ENEMY_SIZE/2,WIDTH-ENEMY_SIZE/2)
-    y = random.uniform(ENEMY_SIZE/2,HEIGHT-ENEMY_SIZE/2)
+    def get_position(self):
+        return self.canvas.coords(self.object)
     
-    enemy = canvas.create_image(x,y,image=enemy_img)
+class Player(Gameobject):
+    def __init__(self, canvas, image_path, size, x, y):
+        super().__init__(canvas, image_path, size, x, y)
 
-    enemies.append(enemy)
+
+    def move_player(self, event):
+        key = event.keysym
+        x, y = 0, 0
+        player_coords = self.canvas.coords(self.object)
+        if key == "Up" and player_coords[1] - PLAYER_SIZE/2 > 0:
+            y = -10
+        elif key == "Down" and player_coords[1] + PLAYER_SIZE/2 < HEIGHT:
+            y = 10
+        elif key == "Left" and player_coords[0] - PLAYER_SIZE/2 > 0:
+            x = -10
+        elif key == "Right" and player_coords[0] + PLAYER_SIZE/2 < WIDTH:
+            x = 10
+        self.canvas.move(self.object,x,y)           
     
-#移動
-def move_player(event):
-    key = event.keysym
-    x, y = 0, 0
-    player_coords = canvas.coords(player)
-    if key == "Up" and player_coords[1] - PLAYER_SIZE/2 > 0:
-        y = -10
-    elif key == "Down" and player_coords[1] + PLAYER_SIZE/2 < HEIGHT:
-        y = 10
-    elif key == "Left" and player_coords[0] - PLAYER_SIZE/2 > 0:
-        x = -10
-    elif key == "Right" and player_coords[0] + PLAYER_SIZE/2 < WIDTH:
-        x = 10
-    canvas.move(player,x,y)
+class Enemy(Gameobject):
+    def __init__(self, canvas, image_path, size):
+       
+        random_x = random.randint(0 + size, WIDTH - size) 
+        random_y = random.randint(0 + size, HEIGHT - size)
+        super().__init__(canvas, image_path, size, random_x, random_y)
 
-#創造敵人
-for _ in range(ENEMY_COUNT):
-    create_enemy()
-    time.sleep(0.1)
+    @staticmethod
+    def create_enemies(canvas, image_path, size):
+        enemy = Enemy(canvas, image_path, size)
+        return enemy
 
-def check_collision():
-    for enemy in enemies:
-        player_coords = canvas.coords(player)
-        enemy_coords = canvas.coords(enemy)
-        if player_coords[0] - PLAYER_SIZE/2 <= enemy_coords[0] + ENEMY_SIZE/2 and \
-        player_coords[1] - PLAYER_SIZE/2 <= enemy_coords[1] + ENEMY_SIZE/2 and \
-        player_coords[0] + PLAYER_SIZE/2 >= enemy_coords[0] - ENEMY_SIZE/2 and \
-        player_coords[1] + PLAYER_SIZE/2 >= enemy_coords[1] - ENEMY_SIZE/2:
-            return True
-    return False
+class Game:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Game")
+        self.root.geometry(f"{WIDTH}x{HEIGHT}+{int(SCREEN_WIDTH/4)}+{int(SCREEN_HEIGHT/4)}")
+        self.root.iconbitmap(f"{DIRECTORY}/image/game_icon.ico")
+        self.canvas = tk.Canvas(self.root,width=WIDTH,height=HEIGHT,bg="white")
+        self.canvas.pack()
 
-def main_loop():
-    #檢測碰撞
-    if not check_collision():
-        for enemy in enemies:
-            canvas.move(enemy,0,5)
-            if canvas.coords(enemy)[1]>HEIGHT-ENEMY_SIZE/2:
-                canvas.delete(enemy)
-                enemies.remove(enemy)
-                create_enemy()
-    else:
-        canvas.create_text(200,250,text="Game Over",fill="#00A600",font=("blazed",40))
-        root.unbind("<Key>")
-    root.after(50,main_loop)
+        self.game_over = False
+        self.player = Player(self.canvas, f"{DIRECTORY}/image/player.png", PLAYER_SIZE, WIDTH/2, HEIGHT/2)
+        self.enemies = []
+        for i in range(ENEMY_COUNT):
+            self.enemies.append(Enemy(self.canvas, f"{DIRECTORY}/image/enemy.png", PLAYER_SIZE))
+        
+        self.root.bind("<Key>",self.player.move_player)
+        self.main_loop()
+        self.root.mainloop()
+
+    def check_collision(self):
+        player_coords = self.player.get_position()
+        for enemy in self.enemies:
+            enemy_coords = enemy.get_position()
+            if player_coords[0] - PLAYER_SIZE/2 <= enemy_coords[0] + ENEMY_SIZE/2 and \
+                player_coords[1] - PLAYER_SIZE/2 <= enemy_coords[1] + ENEMY_SIZE/2 and \
+                player_coords[0] + PLAYER_SIZE/2 >= enemy_coords[0] - ENEMY_SIZE/2 and \
+                player_coords[1] + PLAYER_SIZE/2 >= enemy_coords[1] - ENEMY_SIZE/2:
+                return True
+        return False
+         
+    def main_loop(self):
+        #檢測碰撞
+        print(f"{self.game_over} 1")
+        self.game_over = self.check_collision()
+        print(f"{self.game_over} 2")
+        if not self.game_over:
+            for enemy in self.enemies:
+                enemy_coords = enemy.get_position()
+                enemy.move(0,5)
+                if enemy_coords[1]>HEIGHT-ENEMY_SIZE/2:
+                    self.canvas.delete(enemy)
+                    self.enemies.remove(enemy)
+                    enemy = Enemy.create_enemies(self.canvas, f"{DIRECTORY}/image/enemy.png", ENEMY_SIZE)
+                    self.enemies.append(enemy)
+        else:
+            self.canvas.create_text(200,250,text="Game Over",fill="#00A600",font=("blazed",40))
+            self.root.unbind("<Key>")
+
+        self.root.after(50,self.main_loop)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    DIRECTORY = "D:/python code"
+    PLAYER_SIZE = 20
+    ENEMY_SIZE = 20
+    WIDTH = 400
+    HEIGHT = 600
+    SCREEN_WIDTH = root.winfo_screenwidth()
+    SCREEN_HEIGHT = root.winfo_screenheight()
+    ENEMY_SPEED = 5
+    ENEMY_COUNT = 10
+    game = Game(root)
     
-root.bind("<Key>",move_player)
-main_loop()
-root.mainloop()
