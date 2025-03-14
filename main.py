@@ -1,6 +1,7 @@
 import tkinter as tk
 import random
 import time
+import os
 from PIL import Image, ImageTk
 
 
@@ -99,7 +100,7 @@ class Game:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    DIRECTORY = "C:/Users/admin/Desktop/coding/python/assignment"
+    DIRECTORY = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
     PLAYER_SIZE = 20
     ENEMY_SIZE = 20
     WIDTH = 400
