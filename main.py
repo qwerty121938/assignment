@@ -81,9 +81,7 @@ class Game:
          
     def main_loop(self):
         #檢測碰撞
-        print(f"{self.game_over} 1")
         self.game_over = self.check_collision()
-        print(f"{self.game_over} 2")
         if not self.game_over:
             for enemy in self.enemies:
                 enemy_coords = enemy.get_position()
@@ -101,7 +99,7 @@ class Game:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    DIRECTORY = "D:/python code"
+    DIRECTORY = "C:/Users/admin/Desktop/coding/python/assignment"
     PLAYER_SIZE = 20
     ENEMY_SIZE = 20
     WIDTH = 400
