@@ -1,6 +1,6 @@
 
-# requirements
-`command`
+# requirements (run with python)
+> If you use exe to execute the game, you don't need this step
 ```
 pip install pillow
 ```
